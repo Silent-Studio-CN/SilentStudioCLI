@@ -238,6 +238,28 @@ ss install list
 
 ---
 
+### 6. 多源版本查询
+
+```bash
+ss sources silentstudio
+```
+
+同时查询 PyPI、阿里云、清华、腾讯云等索引，显示每个源的最新版本：
+
+```text
+Package: silentstudio
+Source       Version          URL
+------------------------------------------------------------------------
+PyPI         0.3.1            https://pypi.org/simple
+Aliyun       0.1.7            https://mirrors.aliyun.com/pypi/simple
+Tsinghua     0.1.7            https://pypi.tuna.tsinghua.edu.cn/simple
+Tencent      0.1.7            https://mirrors.cloud.tencent.com/pypi/simple
+```
+
+`ss install <包名>` 会先打印同样的源版本表，然后自动选择版本最新的源安装；如果失败，会按顺序回退到其他源。
+
+---
+
 ## 🔧 配置
 
 SilentStudio 在用户目录下创建 `~/.silentstudio/` 文件夹：

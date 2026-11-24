@@ -10,6 +10,7 @@ from .utils import get_system_language
 from .installer import handle_install
 from .list_packages import handle_list_packages
 from .project_new import handle_new
+from .sources import handle_sources
 from .platform import ensure_command_aliases
 
 
@@ -27,6 +28,7 @@ SilentStudio CLI v{__version__} - 让开发者体验更好一点
   silentstudio new <name> --lang <lang>创建新项目
   silentstudio <pkg_name>              查询并安装生态库
   silentstudio install list            列出已安装的库
+  silentstudio sources <pkg>           查看各 PyPI 源的版本
   silentstudio release <project> <ver> 触发 GitHub Release
   silentstudio git <args...>           git 透传
   silentstudio status / commit / push  常用 git 快捷命令
@@ -50,6 +52,7 @@ Usage:
   silentstudio new <name> --lang <lang> Create new project
   silentstudio <pkg_name>              Query and install package
   silentstudio install list            List installed packages
+  silentstudio sources <pkg>           Show versions across PyPI sources
   silentstudio release <project> <ver> Trigger a GitHub release
   silentstudio git <args...>           Pass through to git
   silentstudio status / commit / push  Common git shortcuts
@@ -111,6 +114,9 @@ def main():
     install_parser = subparsers.add_parser("install", help="安装相关", add_help=False)
     install_subparsers = install_parser.add_subparsers(dest="install_cmd", help="安装子命令")
     list_parser = install_subparsers.add_parser("list", help="列出已安装的库", add_help=False)
+
+    sources_parser = subparsers.add_parser("sources", help="查看各 PyPI 源的版本", add_help=False)
+    sources_parser.add_argument("package", help="包名")
     
     # 解析已知参数，忽略未知（处理 silentstudio <pkg_name>）
     args, unknown = parser.parse_known_args()
@@ -130,6 +136,9 @@ def main():
     if args.command == "new":
         return handle_new(args.name, args.language)
     
+    if args.command == "sources":
+        return handle_sources(args.package)
+
     if args.command == "install":
         if args.install_cmd == "list":
             return handle_list_packages()

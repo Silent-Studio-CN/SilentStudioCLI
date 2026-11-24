@@ -50,26 +50,38 @@ def check_pypi(pkg_name: str) -> Tuple[bool, Optional[str]]:
 
 
 def install_package(pkg_name: str, channel: str = "pypi") -> Tuple[bool, str]:
-    """安装包"""
+    """安装包，并按各索引的版本选择最新源。"""
     config = load_config()
     scope = config.get("install_scope", "user")
-    
-    if channel == "pypi":
+
+    if channel != "pypi":
+        return False, f"❌ 不支持的渠道: {channel}"
+
+    from .sources import best_source, get_sources, print_report
+
+    sources = get_sources()
+    best = best_source(pkg_name)
+    print_report(pkg_name)
+
+    ordered = []
+    if best:
+        ordered.append((best[0], best[1], best[2]))
+    ordered.extend((name, url, None) for name, url in sources if not best or url != best[1])
+
+    last_error = ""
+    for name, url, version in ordered:
         success, stdout, stderr = run_pip_command(
-            ["install", pkg_name],
-            scope=scope
+            ["install", "--upgrade", "-i", url, pkg_name],
+            scope=scope,
         )
         if success:
-            # 记录安装
-            version = get_package_version(pkg_name)
-            if version:
-                record_installation(pkg_name, version, "pypi")
-            return True, f"✅ 成功安装 {pkg_name} (版本: {version or '未知'})"
-        else:
-            return False, f"❌ 安装失败: {stderr or stdout}"
-    
-    return False, f"❌ 不支持的渠道: {channel}"
+            installed = get_package_version(pkg_name)
+            if installed:
+                record_installation(pkg_name, installed, "pypi")
+            return True, f"✅ 成功安装 {pkg_name} (版本: {installed or version or '未知'}, 源: {name})"
+        last_error = stderr or stdout
 
+    return False, f"❌ 安装失败: {last_error}"
 
 def record_installation(name: str, version: str, channel: str) -> None:
     """记录安装到 installed.json"""
