@@ -23,8 +23,8 @@ pip install silentstudio[window]
 ### 从源码安装
 
 ```bash
-git clone https://github.com/Silent-Studio-CN/SilentStudio.git
-cd SilentStudio
+git clone https://github.com/Silent-Studio-CN/SilentStudioCLI.git
+cd SilentStudioCLI
 pip install -e .
 ```
 
@@ -32,18 +32,20 @@ pip install -e .
 
 ## 🚀 快速开始
 
+安装后同时提供 `silentstudio` 和 `ss` 两个命令，下面统一用 `ss`。
+
 ```bash
 # 1. 创建一个 Java 项目
-silentstudio new my-first-project -l java
+ss new my-first-project -l java
 
 # 2. 安装 SlimeMold 库
-silentstudio slimemold
+ss slimemold
 
 # 3. 查看已安装的库
-silentstudio install list
+ss install list
 
 # 4. 启动图形界面（需安装 window 组件）
-silentstudio -w
+ss -w
 ```
 
 ---
@@ -194,7 +196,7 @@ silentstudio <包名>
 
 ```bash
 # 安装 SlimeMold（SilentStudio 生态库）
-silentstudio slimemold
+ss slimemold
 
 # 安装 PyPI 上的第三方库（需确认）
 silentstudio requests
@@ -220,7 +222,7 @@ silentstudio requests
 ### 5. 列出已安装的库
 
 ```bash
-silentstudio install list
+ss install list
 ```
 
 列出当前 Python 环境中所有已安装的库，并自动区分哪些是通过 SilentStudio 安装的。
@@ -248,7 +250,7 @@ silentstudio install list
 ### 6. 启动图形界面（GUI）
 
 ```bash
-silentstudio -w
+ss -w
 # 或
 silentstudio --window
 ```
@@ -342,7 +344,7 @@ SilentStudio 维护了一个官方索引，列出了所有经过验证的生态�
 
 ```bash
 # 克隆仓库
-git clone https://github.com/Silent-Studio-CN/SilentStudio.git
+git clone https://github.com/Silent-Studio-CN/SilentStudioCLI.git
 cd SilentStudio
 
 # 创建虚拟环境（推荐）
@@ -386,7 +388,7 @@ SilentStudio/
 # 测试命令
 silentstudio -v
 silentstudio new test -l python
-silentstudio install list
+ss install list
 ```
 
 ### 构建发布

@@ -5,13 +5,13 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="silentstudio",
-    version="0.1.0",
+    version="0.2.0",
     author="SilentStudio",
     author_email="SilentStudio@Home.email.cn",
     description="SilentStudio CLI - 让开发者体验更好一点",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/Silent-Studio-CN/SilentStudio",
+    url="https://github.com/Silent-Studio-CN/SilentStudioCLI",
     package_dir={"": "src"},
     packages=find_packages(where="src"),
     classifiers=[
@@ -30,6 +30,7 @@ setup(
     entry_points={
         "console_scripts": [
             "silentstudio=silentstudio.cli:main",
+            "ss=silentstudio.cli:main",
         ],
     },
 )
