@@ -66,6 +66,10 @@ def handle_config(argv: list[str]) -> int:
         if value != "auto":
             value = normalize_language(value)
 
+    if key == "language" and value == "auto":
+        from .language_pack import reset_first_run
+        reset_first_run()
+
     config[key] = value
     save_config(config)
     print(f"{key} = {value}")
