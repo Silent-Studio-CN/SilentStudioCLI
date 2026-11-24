@@ -10,6 +10,7 @@ from .utils import get_system_language
 from .installer import handle_install
 from .list_packages import handle_list_packages
 from .project_new import handle_new
+from .platform import ensure_command_aliases
 
 
 def show_help(lang: str) -> None:
@@ -22,7 +23,6 @@ SilentStudio CLI v{__version__} - 让开发者体验更好一点
 用法:
   silentstudio                          显示此帮助信息
   silentstudio -v, --version            显示版本号
-  silentstudio -w, --window            启动 GUI 界面
   silentstudio new <name> -l <lang>    创建新项目
   silentstudio new <name> --lang <lang>创建新项目
   silentstudio <pkg_name>              查询并安装生态库
@@ -35,7 +35,6 @@ SilentStudio CLI v{__version__} - 让开发者体验更好一点
   silentstudio new my-app -l java
   silentstudio slimemold
   silentstudio install list
-  silentstudio -w
 
 更多信息: https://github.com/Silent-Studio-CN/SilentStudioCLI
 """)
@@ -47,7 +46,6 @@ Home: https://github.com/Silent-Studio-CN/SilentStudioCLI
 Usage:
   silentstudio                          Show this help
   silentstudio -v, --version            Show version
-  silentstudio -w, --window            Launch GUI
   silentstudio new <name> -l <lang>    Create new project
   silentstudio new <name> --lang <lang> Create new project
   silentstudio <pkg_name>              Query and install package
@@ -60,7 +58,6 @@ Examples:
   silentstudio new my-app -l java
   silentstudio slimemold
   silentstudio install list
-  silentstudio -w
 
 More info: https://github.com/Silent-Studio-CN/SilentStudioCLI
 """)
@@ -74,6 +71,7 @@ GIT_COMMANDS = {
 
 def main():
     """主入口"""
+    ensure_command_aliases()
     lang = get_system_language()
 
     argv = sys.argv[1:]
@@ -99,7 +97,6 @@ def main():
     
     # 全局选项
     parser.add_argument("-v", "--version", action="store_true", help="显示版本号")
-    parser.add_argument("-w", "--window", action="store_true", help="启动 GUI 界面")
     parser.add_argument("-h", "--help", action="store_true", help="显示帮助信息")
     
     # 子命令
@@ -128,18 +125,6 @@ def main():
         print(f"SilentStudio CLI v{__version__}")
         return 0
     
-    # 处理 -w/--window
-    if args.window:
-        try:
-            from .window import main as gui_main
-            gui_main()
-            return 0
-        except ImportError:
-            if lang == "zh-CN":
-                print("❌ GUI 组件未安装，请执行: pip install silentstudio[window]")
-            else:
-                print("❌ GUI component not installed, please run: pip install silentstudio[window]")
-            return 1
     
     # 处理子命令
     if args.command == "new":
@@ -159,7 +144,7 @@ def main():
     if len(sys.argv) >= 2:
         pkg_name = sys.argv[1]
         # 排除命令本身
-        if pkg_name not in ("new", "install", "-v", "--version", "-w", "--window", "-h", "--help"):
+        if pkg_name not in ("new", "install", "-v", "--version", "-h", "--help"):
             return handle_install(pkg_name, lang)
     
     # 默认显示帮助

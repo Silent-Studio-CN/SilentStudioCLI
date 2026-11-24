@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as f:
 
 setup(
     name="silentstudio",
-    version="0.2.0",
+    version="0.3.0",
     author="SilentStudio",
     author_email="SilentStudio@Home.email.cn",
     description="SilentStudio CLI - 让开发者体验更好一点",
@@ -24,9 +24,6 @@ setup(
         "requests>=2.25.0",
         "colorama>=0.4.0",
     ],
-    extras_require={
-        "window": ["PySide6>=6.4.0"],
-    },
     entry_points={
         "console_scripts": [
             "silentstudio=silentstudio.cli:main",

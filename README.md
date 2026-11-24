@@ -14,12 +14,6 @@ SilentStudio CLI 是一个命令行工具，旨在改善开发者的日常体验
 pip install silentstudio
 ```
 
-### 安装 GUI 支持（可选）
-
-```bash
-pip install silentstudio[window]
-```
-
 ### 从源码安装
 
 ```bash
@@ -43,9 +37,6 @@ ss slimemold
 
 # 3. 查看已安装的库
 ss install list
-
-# 4. 启动图形界面（需安装 window 组件）
-ss -w
 ```
 
 ---
@@ -247,31 +238,6 @@ ss install list
 
 ---
 
-### 6. 启动图形界面（GUI）
-
-```bash
-ss -w
-# 或
-silentstudio --window
-```
-
-启动一个基于 PySide6 的图形界面，所有命令行功能都可以在 GUI 中操作。
-
-**前置条件：**
-```bash
-pip install silentstudio[window]
-```
-
-**GUI 特点：**
-
-- 暗色主题，护眼舒适
-- 命令历史记录
-- 实时输出显示
-- 支持 `clear` 清空屏幕
-- 支持 `exit` / `quit` 退出
-
----
-
 ## 🔧 配置
 
 SilentStudio 在用户目录下创建 `~/.silentstudio/` 文件夹：
@@ -355,9 +321,6 @@ venv\Scripts\activate     # Windows
 
 # 开发模式安装
 pip install -e .
-
-# 安装开发依赖
-pip install -e .[window]  # 包含 GUI 支持
 ```
 
 ### 项目结构
@@ -374,7 +337,6 @@ SilentStudio/
 │       ├── project_new.py    # 创建项目
 │       ├── config.py         # 配置管理
 │       ├── utils.py          # 工具函数
-│       └── window.py         # GUI 界面
 ├── index.jsonl               # 官方索引
 ├── setup.py                  # 安装脚本
 ├── pyproject.toml            # 项目配置
@@ -414,7 +376,6 @@ python -m twine upload dist/*
 - ✨ 支持 `new` 命令（Java/Python/Go）
 - ✨ 支持包安装（索引 + PyPI 回退）
 - ✨ 支持 `install list` 列出已安装库
-- ✨ 支持 `-w` / `--window` GUI 界面
 - 🌐 支持中英文自适应
 - 📦 支持 PyPI 镜像源配置
 
