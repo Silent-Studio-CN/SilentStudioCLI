@@ -229,6 +229,7 @@ HELP_TEXT = {
         "install_list": "列出已安装的库", "sources": "查看各 PyPI 源的版本",
         "release": "触发 GitHub Release", "git": "git 透传",
         "shortcuts": "常用 git 快捷命令",
+        "uninstall": "卸载已安装的库",
     },
     "zh-TW": {
         "usage": "用法", "examples": "範例", "more": "更多資訊",
@@ -237,6 +238,7 @@ HELP_TEXT = {
         "install_list": "列出已安裝的套件", "sources": "查看各 PyPI 來源的版本",
         "release": "觸發 GitHub Release", "git": "git 透傳",
         "shortcuts": "常用 git 快捷指令",
+        "uninstall": "解除安裝已安裝的套件",
     },
     "ja": {
         "usage": "使い方", "examples": "例", "more": "詳細",
@@ -296,6 +298,7 @@ def help_text(version: str, lang: str) -> str:
         f"  ss sources <pkg>         {h['sources']}",
         f"  ss config [key] [value] {h.get('config', 'Show or change configuration')}",
         f"  ss release <project> <version>  {h['release']}",
+        f"  ss uninstall <pkg>       {h.get('uninstall', 'Uninstall a package')}",
         f"  ss git <args...>         {h['git']}",
         f"  ss status/commit/push    {h['shortcuts']}",
         "",

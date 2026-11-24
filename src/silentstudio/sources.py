@@ -141,7 +141,9 @@ def _stream_table(package: str, sources, minimum: float = 1.5):
         while True:
             pending = [index for index, value in enumerate(rows) if value is None]
             elapsed = time.monotonic() - started
-            if not pending and elapsed >= minimum:
+            # As soon as one source resolves, let the user choose; the other
+            # queries keep running in the background.
+            if elapsed >= minimum and (not pending or any(value for value in rows)):
                 break
             sys.stdout.write(f"\x1b[{len(sources)}A")
             for index, (name, url) in enumerate(sources):
@@ -151,7 +153,7 @@ def _stream_table(package: str, sources, minimum: float = 1.5):
             time.sleep(0.12)
         sys.stdout.write(f"\x1b[{len(sources)}A")
         for index, (name, url) in enumerate(sources):
-            sys.stdout.write("\r" + line_for(rows[index] or "not found", name, url).ljust(width) + "\n")
+            sys.stdout.write("\r" + line_for(rows[index] or "...", name, url).ljust(width) + "\n")
         sys.stdout.flush()
     finally:
         sys.stdout.write("\x1b[?25h")

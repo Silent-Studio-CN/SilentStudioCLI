@@ -314,3 +314,36 @@ def handle_install(pkg_name: str, lang: str) -> int:
     success, msg = install_package(target, "pypi")
     print(msg)
     return 0 if success else 1
+
+
+def handle_uninstall(pkg_name: str, lang: str, assume_yes: bool = False) -> int:
+    """Uninstall a package and remove its install record."""
+    if not check_package_installed(pkg_name):
+        print(f"❌ {pkg_name} 未安装" if lang == "zh-CN" else f"❌ {pkg_name} is not installed")
+        return 1
+
+    if not assume_yes:
+        prompt = f"确认卸载 {pkg_name}？[y/N]: " if lang == "zh-CN" else f"Uninstall {pkg_name}? [y/N]: "
+        try:
+            answer = input(prompt).strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            return 130
+        if answer not in ("y", "yes", "是"):
+            print("已取消" if lang == "zh-CN" else "Cancelled")
+            return 0
+
+    success, stdout, stderr = run_pip_command(
+        ["uninstall", "-y", pkg_name],
+        scope="",
+    )
+    if not success:
+        print(f"❌ 卸载失败: {stderr or stdout}")
+        return 1
+
+    data = load_installed()
+    data["installed"] = [item for item in data.get("installed", [])
+                         if item.get("name") != pkg_name]
+    save_installed(data)
+    print(f"✅ 已卸载 {pkg_name}" if lang == "zh-CN" else f"✅ Uninstalled {pkg_name}")
+    return 0

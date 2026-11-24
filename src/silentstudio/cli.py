@@ -7,7 +7,7 @@ from typing import Optional
 from . import __version__
 from .config import load_config
 from .utils import get_system_language
-from .installer import handle_install
+from .installer import handle_install, handle_uninstall
 from .list_packages import handle_list_packages
 from .project_new import handle_new
 from .sources import handle_sources
@@ -48,6 +48,13 @@ def _main():
         return subprocess.call(["git", *argv])
     if argv and argv[0] == "install" and len(argv) > 1 and argv[1] != "list":
         return handle_install(argv[1], lang)
+    if argv and argv[0] in ("uninstall", "remove"):
+        assume_yes = "--yes" in argv or "-y" in argv
+        packages = [item for item in argv[1:] if item not in ("--yes", "-y")]
+        if not packages:
+            print("Usage: ss uninstall <package> [-y]")
+            return 2
+        return handle_uninstall(packages[0], lang, assume_yes)
     if argv and argv[0] == "config":
         from .config_cli import handle_config
         return handle_config(argv[1:])

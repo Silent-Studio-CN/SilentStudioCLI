@@ -31,6 +31,7 @@
     "sources": "查看各 PyPI 源的版本",
     "release": "触发 GitHub Release",
     "git": "git 透传",
-    "shortcuts": "常用 git 快捷命令"
+    "shortcuts": "常用 git 快捷命令",
+    "uninstall": "卸载已安装的库"
   }
 }
