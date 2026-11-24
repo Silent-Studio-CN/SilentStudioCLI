@@ -1,0 +1,36 @@
+{
+  "code": "zh-TW",
+  "strings": {
+    "cancelled": "已取消。",
+    "project": "專案名稱",
+    "repository": "倉庫",
+    "workflow": "工作流程",
+    "ref": "參照",
+    "tag": "Tag 範本",
+    "saved": "已儲存 {project} 到 {path}",
+    "invalid_repo": "倉庫格式無效：{repo!r}，應為 owner/repo",
+    "configured": "已設定專案：",
+    "usage": "用法：ss release <project> <version> [commit]",
+    "no_projects": "尚未設定專案。執行：ss release config",
+    "version_required": "缺少版本號",
+    "unknown_project": "專案 '{project}' 未設定。執行：ss release config {project}",
+    "package": "套件",
+    "source": "來源",
+    "version": "版本",
+    "not_found": "找不到"
+  },
+  "help": {
+    "usage": "用法",
+    "examples": "範例",
+    "more": "更多資訊",
+    "show_help": "顯示此說明",
+    "show_version": "顯示版本號",
+    "new": "建立新專案",
+    "pkg": "查詢並安裝生態套件",
+    "install_list": "列出已安裝的套件",
+    "sources": "查看各 PyPI 來源的版本",
+    "release": "觸發 GitHub Release",
+    "git": "git 透傳",
+    "shortcuts": "常用 git 快捷指令"
+  }
+}

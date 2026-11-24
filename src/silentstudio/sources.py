@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import itertools
 import re
+import shutil
 import subprocess
 import sys
 import threading
@@ -71,19 +72,16 @@ def _stream_table(package: str, sources, minimum: float = 1.5):
         threads.append(thread)
 
     print(f"Package: {package}")
-    print(f"{'Source':<12} {'Version':<16} URL")
-    print("-" * 72)
-    width = 100
+    width = max(40, shutil.get_terminal_size((80, 24)).columns - 1)
+    header = f"{'Source':<12} {'Version':<16} URL"[:width]
+    print(header)
+    print("-" * min(72, width))
 
-    def draw(character=None) -> None:
-        for index, (name, url) in enumerate(sources):
-            cell = rows[index] or character or ""
-            line = f"{name:<12} {cell:<16} {url}"
-            print(line.ljust(width))
+    def line_for(cell: str, name: str, url: str) -> str:
+        return f"{name:<12} {cell:<16} {url}"[:width]
 
-    for _ in sources:
-        for index, (name, url) in enumerate(sources):
-            print(f"{name:<12} {'':<16} {url}".ljust(width))
+    for index, (name, url) in enumerate(sources):
+        print(line_for("", name, url))
 
     started = time.monotonic()
     frames = itertools.cycle("|/-\\")
@@ -97,12 +95,12 @@ def _stream_table(package: str, sources, minimum: float = 1.5):
             sys.stdout.write(f"\x1b[{len(sources)}A")
             for index, (name, url) in enumerate(sources):
                 cell = rows[index] or next(frames)
-                print(f"{name:<12} {cell:<16} {url}".ljust(width))
+                sys.stdout.write("\r" + line_for(cell, name, url).ljust(width) + "\n")
             sys.stdout.flush()
             time.sleep(0.12)
         sys.stdout.write(f"\x1b[{len(sources)}A")
         for index, (name, url) in enumerate(sources):
-            print(f"{name:<12} {rows[index] or 'not found':<16} {url}".ljust(width))
+            sys.stdout.write("\r" + line_for(rows[index] or "not found", name, url).ljust(width) + "\n")
         sys.stdout.flush()
     finally:
         sys.stdout.write("\x1b[?25h")

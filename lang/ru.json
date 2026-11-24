@@ -1,0 +1,36 @@
+{
+  "code": "ru",
+  "strings": {
+    "cancelled": "Отменено.",
+    "project": "Имя проекта",
+    "repository": "Репозиторий",
+    "workflow": "Workflow",
+    "ref": "Ветка/ref",
+    "tag": "Шаблон тега",
+    "saved": "Сохранено {project} в {path}",
+    "invalid_repo": "Неверный формат репозитория: {repo!r}. Нужно owner/repo",
+    "configured": "Настроенные проекты:",
+    "usage": "Использование: ss release <project> <version> [commit]",
+    "no_projects": "Проекты не настроены. Запустите: ss release config",
+    "version_required": "Требуется версия",
+    "unknown_project": "Проект '{project}' не настроен. Запустите: ss release config {project}",
+    "package": "Пакет",
+    "source": "Источник",
+    "version": "Версия",
+    "not_found": "не найдено"
+  },
+  "help": {
+    "usage": "Использование",
+    "examples": "Примеры",
+    "more": "Подробнее",
+    "show_help": "Показать справку",
+    "show_version": "Показать версию",
+    "new": "Создать новый проект",
+    "pkg": "Установить пакет экосистемы",
+    "install_list": "Список установленных пакетов",
+    "sources": "Версии по источникам PyPI",
+    "release": "Запустить GitHub Release",
+    "git": "Передать в git",
+    "shortcuts": "Частые команды git"
+  }
+}

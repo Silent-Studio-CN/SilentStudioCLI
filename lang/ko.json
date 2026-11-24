@@ -1,0 +1,36 @@
+{
+  "code": "ko",
+  "strings": {
+    "cancelled": "취소되었습니다.",
+    "project": "프로젝트 이름",
+    "repository": "저장소",
+    "workflow": "워크플로",
+    "ref": "참조",
+    "tag": "태그 템플릿",
+    "saved": "{project}을(를) {path}에 저장했습니다",
+    "invalid_repo": "저장소 형식이 잘못되었습니다: {repo!r} (owner/repo)",
+    "configured": "설정된 프로젝트:",
+    "usage": "사용법: ss release <project> <version> [commit]",
+    "no_projects": "설정된 프로젝트가 없습니다. 실행: ss release config",
+    "version_required": "버전이 필요합니다",
+    "unknown_project": "프로젝트 '{project}'이(가) 설정되지 않았습니다. 실행: ss release config {project}",
+    "package": "패키지",
+    "source": "소스",
+    "version": "버전",
+    "not_found": "찾을 수 없음"
+  },
+  "help": {
+    "usage": "사용법",
+    "examples": "예시",
+    "more": "자세히",
+    "show_help": "도움말 표시",
+    "show_version": "버전 표시",
+    "new": "새 프로젝트 만들기",
+    "pkg": "생태계 패키지 설치",
+    "install_list": "설치된 패키지 목록",
+    "sources": "PyPI 소스별 버전 표시",
+    "release": "GitHub Release 실행",
+    "git": "git으로 전달",
+    "shortcuts": "자주 쓰는 git 명령"
+  }
+}

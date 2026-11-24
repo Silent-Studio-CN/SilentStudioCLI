@@ -57,7 +57,7 @@ def _choose_source(rows, lang: str):
         return best
 
     while True:
-        prompt = "选择安装源（编号/名称，回车自动）: " if lang == "zh-CN" else "Select source (number/name, Enter auto): "
+        prompt = "选择安装源: " if lang == "zh-CN" else "Select source: "
         try:
             choice = input(prompt).strip()
         except EOFError:

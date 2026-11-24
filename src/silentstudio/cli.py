@@ -29,8 +29,14 @@ GIT_COMMANDS = {
 def _main():
     """主入口"""
     ensure_command_aliases()
+
+    from .language_pack import first_run_language
+    from .i18n import apply_cached_pack
+
+    detected = first_run_language()
     config = load_config()
-    lang = get_system_language(config.get("language", "auto"))
+    lang = detected or get_system_language(config.get("language", "auto"))
+    apply_cached_pack(lang)
 
     argv = sys.argv[1:]
     if argv and argv[0] in ("release", "releases"):

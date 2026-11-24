@@ -201,7 +201,7 @@ def detect_language() -> str:
 def get_language(config_lang: str = "auto") -> str:
     if config_lang and config_lang != "auto":
         return normalize_language(config_lang)
-    return detect_language()
+    return "en"
 
 
 def tr(key: str, lang: str = "en", **kwargs) -> str:
@@ -310,3 +310,19 @@ def help_text(version: str, lang: str) -> str:
     ]
     return "\n".join(lines)
 
+
+
+def apply_cached_pack(lang: str) -> None:
+    """Merge a downloaded language pack over the built-in strings."""
+    import json
+    from pathlib import Path
+
+    path = Path.home() / ".silentstudio" / "lang" / f"{lang}.json"
+    if not path.is_file():
+        return
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return
+    STRINGS.setdefault(lang, {}).update(data.get("strings", {}))
+    HELP_TEXT.setdefault(lang, {}).update(data.get("help", {}))

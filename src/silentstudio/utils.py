@@ -15,8 +15,12 @@ def detect_language() -> str:
 
 
 def get_system_language(config_lang: str = "auto") -> str:
-    """获取最终使用的语言"""
+    """获取最终使用的语言；默认英语，首次运行由 language_pack 写入配置。"""
+    from .config import load_config
     from .i18n import get_language
+
+    if config_lang == "auto":
+        config_lang = load_config().get("language", "auto")
     return get_language(config_lang)
 
 

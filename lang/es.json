@@ -1,0 +1,36 @@
+{
+  "code": "es",
+  "strings": {
+    "cancelled": "Cancelado.",
+    "project": "Nombre del proyecto",
+    "repository": "Repositorio",
+    "workflow": "Workflow",
+    "ref": "Referencia",
+    "tag": "Plantilla de tag",
+    "saved": "Guardado {project} en {path}",
+    "invalid_repo": "Repositorio inválido: {repo!r}. Se espera owner/repo",
+    "configured": "Proyectos configurados:",
+    "usage": "Uso: ss release <project> <version> [commit]",
+    "no_projects": "No hay proyectos configurados. Ejecuta: ss release config",
+    "version_required": "Falta la versión",
+    "unknown_project": "El proyecto '{project}' no está configurado. Ejecuta: ss release config {project}",
+    "package": "Paquete",
+    "source": "Fuente",
+    "version": "Versión",
+    "not_found": "no encontrado"
+  },
+  "help": {
+    "usage": "Uso",
+    "examples": "Ejemplos",
+    "more": "Más información",
+    "show_help": "Mostrar esta ayuda",
+    "show_version": "Mostrar versión",
+    "new": "Crear un proyecto nuevo",
+    "pkg": "Instalar un paquete del ecosistema",
+    "install_list": "Listar paquetes instalados",
+    "sources": "Mostrar versiones por fuente PyPI",
+    "release": "Publicar un GitHub Release",
+    "git": "Pasar directamente a git",
+    "shortcuts": "Atajos de git habituales"
+  }
+}

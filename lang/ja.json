@@ -1,0 +1,36 @@
+{
+  "code": "ja",
+  "strings": {
+    "cancelled": "キャンセルしました。",
+    "project": "プロジェクト名",
+    "repository": "リポジトリ",
+    "workflow": "ワークフロー",
+    "ref": "参照",
+    "tag": "タグのテンプレート",
+    "saved": "{project} を {path} に保存しました",
+    "invalid_repo": "リポジトリ形式が無効です: {repo!r}（owner/repo）",
+    "configured": "設定済みプロジェクト:",
+    "usage": "使い方: ss release <project> <version> [commit]",
+    "no_projects": "プロジェクトが未設定です。実行: ss release config",
+    "version_required": "バージョンが必要です",
+    "unknown_project": "プロジェクト '{project}' は未設定です。実行: ss release config {project}",
+    "package": "パッケージ",
+    "source": "ソース",
+    "version": "バージョン",
+    "not_found": "見つかりません"
+  },
+  "help": {
+    "usage": "使い方",
+    "examples": "例",
+    "more": "詳細",
+    "show_help": "このヘルプを表示",
+    "show_version": "バージョンを表示",
+    "new": "新しいプロジェクトを作成",
+    "pkg": "エコシステムのパッケージをインストール",
+    "install_list": "インストール済みパッケージを一覧",
+    "sources": "PyPI ソースごとのバージョンを表示",
+    "release": "GitHub Release を実行",
+    "git": "git にそのまま渡す",
+    "shortcuts": "よく使う git コマンド"
+  }
+}
