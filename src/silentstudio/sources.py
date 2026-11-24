@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import itertools
+import os
 import re
 import shutil
+import signal
 import subprocess
 import sys
 import threading
@@ -12,6 +14,30 @@ from typing import Dict, List, Optional, Tuple
 
 from .config import load_config
 from .utils import spinner as animate_spinner
+
+_ACTIVE = set()
+_ACTIVE_LOCK = threading.Lock()
+_CANCELLED = threading.Event()
+
+
+def terminate_all() -> None:
+    """Stop every in-flight source query immediately."""
+    _CANCELLED.set()
+    with _ACTIVE_LOCK:
+        processes = list(_ACTIVE)
+    for proc in processes:
+        try:
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                               capture_output=True)
+            else:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except Exception:
+            try:
+                proc.kill()
+            except Exception:
+                pass
+
 
 DEFAULT_SOURCES: List[Tuple[str, str]] = [
     ("PyPI", "https://pypi.org/simple"),
@@ -46,16 +72,41 @@ def _parse_versions(output: str) -> List[str]:
 
 def query_source(package: str, url: str, timeout: int = 30) -> Optional[str]:
     """Return the newest version advertised by one index, or None."""
+    if _CANCELLED.is_set():
+        return None
+    command = [sys.executable, "-m", "pip", "index", "versions", package,
+               "-i", url, "--disable-pip-version-check"]
+    kwargs = {"stdout": subprocess.PIPE, "stderr": subprocess.PIPE,
+              "text": True, "encoding": "utf-8", "errors": "replace"}
+    if os.name == "nt":
+        kwargs["creationflags"] = subprocess.CREATE_NEW_PROCESS_GROUP
+    else:
+        kwargs["start_new_session"] = True
     try:
-        result = subprocess.run(
-            [sys.executable, "-m", "pip", "index", "versions", package,
-             "-i", url, "--disable-pip-version-check"],
-            capture_output=True, text=True, timeout=timeout,
-        )
-        versions = _parse_versions(result.stdout or result.stderr or "")
-        return versions[0] if versions else None
+        proc = subprocess.Popen(command, **kwargs)
     except Exception:
         return None
+    with _ACTIVE_LOCK:
+        _ACTIVE.add(proc)
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+        versions = _parse_versions(stdout or stderr or "")
+        return versions[0] if versions else None
+    except subprocess.TimeoutExpired:
+        try:
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/F", "/T", "/PID", str(proc.pid)],
+                               capture_output=True)
+            else:
+                os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
+        except Exception:
+            proc.kill()
+        return None
+    except Exception:
+        return None
+    finally:
+        with _ACTIVE_LOCK:
+            _ACTIVE.discard(proc)
 
 
 def _stream_table(package: str, sources, minimum: float = 1.5):

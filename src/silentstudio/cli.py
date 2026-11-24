@@ -134,6 +134,11 @@ def main():
     try:
         return _main()
     except KeyboardInterrupt:
+        try:
+            from .sources import terminate_all
+            terminate_all()
+        except Exception:
+            pass
         from .i18n import tr
         print("\n" + tr("cancelled", get_system_language()))
         return 130
