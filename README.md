@@ -210,6 +210,14 @@ silentstudio requests
 
 ---
 
+也可以通过 `ss install <包名>` 安装；安装时会流式显示各源版本，并提示选择源：
+
+```bash
+ss install pyqt6
+```
+
+支持输入编号（1-4）、源名称（如 tencent，忽略大小写），或直接回车自动选择最新源。
+
 ### 5. 列出已安装的库
 
 ```bash
@@ -261,6 +269,13 @@ Tencent      0.1.7            https://mirrors.cloud.tencent.com/pypi/simple
 ---
 
 ## 🔧 配置
+
+```bash
+ss config                 # 查看全部配置
+ss config install         # 交互式修改安装范围
+ss config language ja     # 修改语言
+```
+
 
 SilentStudio 在用户目录下创建 `~/.silentstudio/` 文件夹：
 

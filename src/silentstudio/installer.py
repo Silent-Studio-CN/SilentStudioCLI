@@ -5,11 +5,13 @@ from typing import Optional, Dict, Any, Tuple
 import requests
 
 from .config import load_config, load_installed, save_installed
+from .sources import _version_key
 from .utils import (
     get_system_language,
     run_pip_command,
     check_package_installed,
     get_package_version,
+    spinner as animate_spinner,
 )
 
 
@@ -49,39 +51,64 @@ def check_pypi(pkg_name: str) -> Tuple[bool, Optional[str]]:
         return False, None
 
 
-def install_package(pkg_name: str, channel: str = "pypi") -> Tuple[bool, str]:
-    """安装包，并按各索引的版本选择最新源。"""
+def _choose_source(rows, lang: str):
+    if not sys.stdin.isatty():
+        best = max(rows, key=lambda item: _version_key(item[2])) if any(r[2] for r in rows) else rows[0]
+        return best
+
+    while True:
+        prompt = "选择安装源（编号/名称，回车自动）: " if lang == "zh-CN" else "Select source (number/name, Enter auto): "
+        try:
+            choice = input(prompt).strip()
+        except EOFError:
+            print()
+            return max(rows, key=lambda item: _version_key(item[2])) if any(r[2] for r in rows) else rows[0]
+        if not choice:
+            return max(rows, key=lambda item: _version_key(item[2])) if any(r[2] for r in rows) else rows[0]
+        if choice.isdigit():
+            index = int(choice)
+            if 1 <= index <= len(rows):
+                return rows[index - 1]
+        for row in rows:
+            if row[0].lower() == choice.lower():
+                return row
+        print("无效的源，请重新输入。" if lang == "zh-CN" else "Invalid source, try again.")
+
+
+def install_package(pkg_name: str, channel: str = "pypi", source=None) -> Tuple[bool, str]:
+    """安装包；source 为空时查询所有源并交互选择。"""
     config = load_config()
     scope = config.get("install_scope", "user")
 
     if channel != "pypi":
         return False, f"❌ 不支持的渠道: {channel}"
 
-    from .sources import best_source, get_sources, print_report
+    from .sources import query_all, print_report, get_sources, _version_key
 
-    sources = get_sources()
-    best = best_source(pkg_name)
-    print_report(pkg_name)
+    if source is None:
+        rows = query_all(pkg_name, spinner=True)
+        if not sys.stdout.isatty():
+            print_report(pkg_name, rows, show_package=False)
+        if not rows:
+            return False, f"❌ 未找到 {pkg_name} 的任何源"
+        source = _choose_source(rows, get_system_language())
 
-    ordered = []
-    if best:
-        ordered.append((best[0], best[1], best[2]))
-    ordered.extend((name, url, None) for name, url in sources if not best or url != best[1])
+    name, url, version = source
+    if not version:
+        print(f"{name} 并没有查询到 {pkg_name}，将尝试执行安装命令 1/1" if get_system_language() == "zh-CN"
+              else f"{name} did not report {pkg_name}; trying install anyway (1/1)")
 
-    last_error = ""
-    for name, url, version in ordered:
-        success, stdout, stderr = run_pip_command(
-            ["install", "--upgrade", "-i", url, pkg_name],
-            scope=scope,
-        )
-        if success:
-            installed = get_package_version(pkg_name)
-            if installed:
-                record_installation(pkg_name, installed, "pypi")
-            return True, f"✅ 成功安装 {pkg_name} (版本: {installed or version or '未知'}, 源: {name})"
-        last_error = stderr or stdout
+    success, stdout, stderr = run_pip_command(
+        ["install", "--upgrade", "-i", url, pkg_name],
+        scope=scope,
+    )
+    if success:
+        installed = get_package_version(pkg_name)
+        if installed:
+            record_installation(pkg_name, installed, "pypi")
+        return True, f"✅ 成功安装 {pkg_name} (版本: {installed or version or '未知'}, 源: {name})"
 
-    return False, f"❌ 安装失败: {last_error}"
+    return False, f"❌ 安装失败: {stderr or stdout}"
 
 def record_installation(name: str, version: str, channel: str) -> None:
     """记录安装到 installed.json"""
@@ -117,8 +144,9 @@ def handle_install(pkg_name: str, lang: str) -> int:
         return 0
     
     # 1. 拉取 SilentStudio 索引
-    print("📡 正在查询 SilentStudio 索引..." if lang == "zh-CN" else "📡 Querying SilentStudio index...")
-    index = fetch_index()
+    label = "正在查询 SilentStudio 索引..." if lang == "zh-CN" else "Querying SilentStudio index..."
+    with animate_spinner(label):
+        index = fetch_index()
     
     # 查找匹配
     matched = None
@@ -141,36 +169,11 @@ def handle_install(pkg_name: str, lang: str) -> int:
             print(msg)
             return 0 if success else 1
     
-    # 2. 未在索引中找到，回退到 PyPI
-    msg_zh_not_found = f"⚠️ 您搜索的 '{pkg_name}' 并未在 SilentStudio 项目列表中查询到"
-    msg_en_not_found = f"⚠️ '{pkg_name}' was not found in the SilentStudio project list"
-    print(msg_zh_not_found if lang == "zh-CN" else msg_en_not_found)
-    
-    exists, version = check_pypi(pkg_name)
-    if exists:
-        msg_zh_pypi = f"📦 但在官方 PyPI 上找到了同名库 (最新版本: {version})"
-        msg_en_pypi = f"📦 But found the same-named package on PyPI (latest version: {version})"
-        print(msg_zh_pypi if lang == "zh-CN" else msg_en_pypi)
-        
-        prompt_zh = "是否安装？[y/N]: "
-        prompt_en = "Install? [y/N]: "
-        prompt = prompt_zh if lang == "zh-CN" else prompt_en
-        
-        try:
-            answer = input(prompt).strip().lower()
-        except KeyboardInterrupt:
-            print("\n❌ 已取消")
-            return 1
-        
-        if answer in ("y", "yes", "是"):
-            success, msg = install_package(pkg_name, "pypi")
-            print(msg)
-            return 0 if success else 1
-        else:
-            print("❌ 已取消安装" if lang == "zh-CN" else "❌ Installation cancelled")
-            return 0
-    else:
-        msg_zh_not_found_all = f"❌ 未在任何源中找到 '{pkg_name}'"
-        msg_en_not_found_all = f"❌ '{pkg_name}' not found in any source"
-        print(msg_zh_not_found_all if lang == "zh-CN" else msg_en_not_found_all)
-        return 1
+    if not matched:
+        print(f"[{pkg_name}] 未在已配置的所有源列表中找到" if lang == "zh-CN"
+              else f"[{pkg_name}] was not found in any configured source")
+
+    target = matched.get("pkg_name", pkg_name) if matched else pkg_name
+    success, msg = install_package(target, "pypi")
+    print(msg)
+    return 0 if success else 1

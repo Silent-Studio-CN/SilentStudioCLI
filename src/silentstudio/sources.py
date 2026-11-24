@@ -1,12 +1,16 @@
 """Multi-index PyPI version discovery."""
 from __future__ import annotations
 
+import itertools
 import re
 import subprocess
 import sys
+import threading
+import time
 from typing import Dict, List, Optional, Tuple
 
 from .config import load_config
+from .utils import spinner as animate_spinner
 
 DEFAULT_SOURCES: List[Tuple[str, str]] = [
     ("PyPI", "https://pypi.org/simple"),
@@ -53,8 +57,64 @@ def query_source(package: str, url: str, timeout: int = 30) -> Optional[str]:
         return None
 
 
-def query_all(package: str) -> List[Tuple[str, str, Optional[str]]]:
-    return [(name, url, query_source(package, url)) for name, url in get_sources()]
+def _stream_table(package: str, sources, minimum: float = 1.5):
+    """Query all sources concurrently and animate each version cell."""
+    rows = [None] * len(sources)
+
+    def worker(index: int, url: str) -> None:
+        rows[index] = query_source(package, url)
+
+    threads = []
+    for index, (_, url) in enumerate(sources):
+        thread = threading.Thread(target=worker, args=(index, url), daemon=True)
+        thread.start()
+        threads.append(thread)
+
+    print(f"Package: {package}")
+    print(f"{'Source':<12} {'Version':<16} URL")
+    print("-" * 72)
+    width = 100
+
+    def draw(character=None) -> None:
+        for index, (name, url) in enumerate(sources):
+            cell = rows[index] or character or ""
+            line = f"{name:<12} {cell:<16} {url}"
+            print(line.ljust(width))
+
+    for _ in sources:
+        for index, (name, url) in enumerate(sources):
+            print(f"{name:<12} {'':<16} {url}".ljust(width))
+
+    started = time.monotonic()
+    frames = itertools.cycle("|/-\\")
+    sys.stdout.write("\x1b[?25l")
+    try:
+        while True:
+            pending = [index for index, value in enumerate(rows) if value is None]
+            elapsed = time.monotonic() - started
+            if not pending and elapsed >= minimum:
+                break
+            sys.stdout.write(f"\x1b[{len(sources)}A")
+            for index, (name, url) in enumerate(sources):
+                cell = rows[index] or next(frames)
+                print(f"{name:<12} {cell:<16} {url}".ljust(width))
+            sys.stdout.flush()
+            time.sleep(0.12)
+        sys.stdout.write(f"\x1b[{len(sources)}A")
+        for index, (name, url) in enumerate(sources):
+            print(f"{name:<12} {rows[index] or 'not found':<16} {url}".ljust(width))
+        sys.stdout.flush()
+    finally:
+        sys.stdout.write("\x1b[?25h")
+        sys.stdout.flush()
+    return [(name, url, rows[index]) for index, (name, url) in enumerate(sources)]
+
+
+def query_all(package: str, spinner: bool = False) -> List[Tuple[str, str, Optional[str]]]:
+    sources = get_sources()
+    if spinner and sys.stdout.isatty():
+        return _stream_table(package, sources)
+    return [(name, url, query_source(package, url)) for name, url in sources]
 
 
 def _version_key(value: Optional[str]) -> Tuple[int, ...]:
@@ -75,9 +135,10 @@ def best_source(package: str) -> Optional[Tuple[str, str, str]]:
     return max(found, key=lambda item: _version_key(item[2]))
 
 
-def print_report(package: str, rows: Optional[List[Tuple[str, str, Optional[str]]]] = None) -> None:
+def print_report(package: str, rows: Optional[List[Tuple[str, str, Optional[str]]]] = None, show_package: bool = True) -> None:
     rows = rows if rows is not None else query_all(package)
-    print(f"Package: {package}")
+    if show_package:
+        print(f"Package: {package}")
     print(f"{'Source':<12} {'Version':<16} URL")
     print("-" * 72)
     for name, url, version in rows:

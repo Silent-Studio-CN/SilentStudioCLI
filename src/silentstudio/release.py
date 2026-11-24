@@ -3,12 +3,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import sys
 import time
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+from .i18n import tr
+from .utils import get_system_language
 
 CONFIG_NAME = ".ss.json"
 USER_CONFIG = Path.home() / ".silentstudio" / "releases.json"
@@ -54,6 +58,7 @@ def save_project(project: str, data: Dict[str, Any]) -> Path:
     except Exception:
         config = {}
     config.setdefault("projects", {})[project] = data
+    config["defaultProject"] = project
     config_path.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return config_path
 
@@ -93,35 +98,49 @@ def handle_release(argv: list[str]) -> int:
     parser.add_argument("--config", action="store_true", help="configure a project")
     parser.add_argument("--list", action="store_true", help="list configured projects")
     args = parser.parse_args(argv)
-
+    if args.project == "config" and not args.version:
+        args.config = True
+        args.project = None
+    lang = get_system_language()
     projects = load_projects()
 
     if args.list:
         if not projects:
-            print("No projects configured.")
+            print(tr("no_projects", lang))
         for name, data in projects.items():
             print(f"{name}\t{data.get('repo')}\t{data.get('workflow')}")
         return 0
 
-    if args.config or not args.project:
-        project = args.project or input("Project name [silentcraft]: ").strip() or "silentcraft"
+    if args.config:
+        project = args.project or input(f"{tr('project', lang)} [silentcraft]: ").strip() or "silentcraft"
         defaults = projects.get(project, DEFAULT_PROJECT)
-        repo = input(f"Repository [{defaults.get('repo')}]: ").strip() or defaults.get("repo")
-        workflow = input(f"Workflow [{defaults.get('workflow')}]: ").strip() or defaults.get("workflow")
-        ref = input(f"Ref [{defaults.get('ref')}]: ").strip() or defaults.get("ref")
-        tag = input(f"Tag template [{defaults.get('tag')}]: ").strip() or defaults.get("tag")
+        repo = input(f"{tr('repository', lang)} [{defaults.get('repo')}]: ").strip() or defaults.get("repo")
+        if not re.fullmatch(r"[^/\s]+/[^/\s]+", repo):
+            print(tr("invalid_repo", lang, repo=repo))
+            return 1
+        workflow = input(f"{tr('workflow', lang)} [{defaults.get('workflow')}]: ").strip() or defaults.get("workflow")
+        ref = input(f"{tr('ref', lang)} [{defaults.get('ref')}]: ").strip() or defaults.get("ref")
+        tag = input(f"{tr('tag', lang)} [{defaults.get('tag')}]: ").strip() or defaults.get("tag")
         path = save_project(project, {"repo": repo, "workflow": workflow, "ref": ref, "tag": tag})
-        print(f"Saved {project} to {path}")
+        print(tr("saved", lang, project=project, path=path))
+        return 0
+
+    if not args.project:
+        if projects:
+            print(tr("configured", lang))
+            for name, data in projects.items():
+                print(f"  {name}\t{data.get('repo')}")
+            print("\n" + tr("usage", lang))
+        else:
+            print(tr("no_projects", lang))
         return 0
 
     if not args.version:
-        parser.error("version is required")
+        parser.error(tr("version_required", lang))
 
     data = projects.get(args.project)
     if not data:
-        raise SystemExit(
-            f"Project '{args.project}' is not configured. Run: ss release config {args.project}"
-        )
+        raise SystemExit(tr("unknown_project", lang, project=args.project))
 
     repo = data["repo"]
     workflow = data["workflow"]

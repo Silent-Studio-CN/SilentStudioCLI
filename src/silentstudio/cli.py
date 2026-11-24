@@ -16,54 +16,8 @@ from .platform import ensure_command_aliases
 
 def show_help(lang: str) -> None:
     """显示帮助信息"""
-    if lang == "zh-CN":
-        print(f"""
-SilentStudio CLI v{__version__} - 让开发者体验更好一点
-主页: https://github.com/Silent-Studio-CN/SilentStudioCLI
-
-用法:
-  silentstudio                          显示此帮助信息
-  silentstudio -v, --version            显示版本号
-  silentstudio new <name> -l <lang>    创建新项目
-  silentstudio new <name> --lang <lang>创建新项目
-  silentstudio <pkg_name>              查询并安装生态库
-  silentstudio install list            列出已安装的库
-  silentstudio sources <pkg>           查看各 PyPI 源的版本
-  silentstudio release <project> <ver> 触发 GitHub Release
-  silentstudio git <args...>           git 透传
-  silentstudio status / commit / push  常用 git 快捷命令
-
-示例:
-  silentstudio new my-app -l java
-  silentstudio slimemold
-  silentstudio install list
-
-更多信息: https://github.com/Silent-Studio-CN/SilentStudioCLI
-""")
-    else:
-        print(f"""
-SilentStudio CLI v{__version__} - Making developer experience better
-Home: https://github.com/Silent-Studio-CN/SilentStudioCLI
-
-Usage:
-  silentstudio                          Show this help
-  silentstudio -v, --version            Show version
-  silentstudio new <name> -l <lang>    Create new project
-  silentstudio new <name> --lang <lang> Create new project
-  silentstudio <pkg_name>              Query and install package
-  silentstudio install list            List installed packages
-  silentstudio sources <pkg>           Show versions across PyPI sources
-  silentstudio release <project> <ver> Trigger a GitHub release
-  silentstudio git <args...>           Pass through to git
-  silentstudio status / commit / push  Common git shortcuts
-
-Examples:
-  silentstudio new my-app -l java
-  silentstudio slimemold
-  silentstudio install list
-
-More info: https://github.com/Silent-Studio-CN/SilentStudioCLI
-""")
+    from .i18n import help_text
+    print(help_text(__version__, lang))
 
 
 GIT_COMMANDS = {
@@ -72,10 +26,11 @@ GIT_COMMANDS = {
 }
 
 
-def main():
+def _main():
     """主入口"""
     ensure_command_aliases()
-    lang = get_system_language()
+    config = load_config()
+    lang = get_system_language(config.get("language", "auto"))
 
     argv = sys.argv[1:]
     if argv and argv[0] in ("release", "releases"):
@@ -85,6 +40,14 @@ def main():
         return subprocess.call(["git", *argv[1:]])
     if argv and argv[0] in GIT_COMMANDS:
         return subprocess.call(["git", *argv])
+    if argv and argv[0] == "install" and len(argv) > 1 and argv[1] != "list":
+        return handle_install(argv[1], lang)
+    if argv and argv[0] == "config":
+        from .config_cli import handle_config
+        return handle_config(argv[1:])
+    if argv and argv[0].startswith("-") and argv[0] not in ("-v", "--version", "-h", "--help"):
+        print("Unknown option: " + argv[0])
+        return 2
     
     # 检查是否有参数
     if len(sys.argv) == 1:
@@ -159,6 +122,15 @@ def main():
     # 默认显示帮助
     show_help(lang)
     return 0
+
+
+def main():
+    try:
+        return _main()
+    except KeyboardInterrupt:
+        from .i18n import tr
+        print("\n" + tr("cancelled", get_system_language()))
+        return 130
 
 
 if __name__ == "__main__":

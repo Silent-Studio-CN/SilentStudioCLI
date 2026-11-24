@@ -1,36 +1,31 @@
+import contextlib
+import itertools
 import locale
 import subprocess
 import sys
+import threading
+import time
 from typing import Optional, Tuple
 
 
 def detect_language() -> str:
     """检测系统语言"""
-    try:
-        lang = locale.getdefaultlocale()[0]
-        if lang:
-            if lang.startswith("zh"):
-                return "zh-CN"
-            elif lang.startswith("en"):
-                return "en-US"
-    except Exception:
-        pass
-    return "en-US"
+    from .i18n import detect_language as _detect
+    return _detect()
 
 
 def get_system_language(config_lang: str = "auto") -> str:
     """获取最终使用的语言"""
-    if config_lang == "auto":
-        return detect_language()
-    return config_lang
+    from .i18n import get_language
+    return get_language(config_lang)
 
 
 def run_pip_command(args: list, scope: str = "user") -> Tuple[bool, str, str]:
     """执行 pip 命令"""
     cmd = [sys.executable, "-m", "pip"]
-    if scope == "user":
-        cmd.append("--user")
     cmd.extend(args)
+    if scope == "user" and len(cmd) > 3:
+        cmd.insert(4, "--user")
     
     try:
         result = subprocess.run(
@@ -44,6 +39,38 @@ def run_pip_command(args: list, scope: str = "user") -> Tuple[bool, str, str]:
         return success, result.stdout, result.stderr
     except Exception as e:
         return False, "", str(e)
+
+
+@contextlib.contextmanager
+def spinner(label: str = "", minimum: float = 1.5):
+    """Print a label and animate a one-line spinner for at least minimum seconds."""
+    if label:
+        print(label, flush=True)
+    if not sys.stdout.isatty():
+        yield
+        return
+
+    stop = threading.Event()
+
+    def animate() -> None:
+        for char in itertools.cycle("-\\|/"):
+            if stop.is_set():
+                break
+            print(f"\r{char}", end="", flush=True)
+            time.sleep(0.12)
+
+    thread = threading.Thread(target=animate, daemon=True)
+    thread.start()
+    started = time.monotonic()
+    try:
+        yield
+        remaining = minimum - (time.monotonic() - started)
+        if remaining > 0:
+            time.sleep(remaining)
+    finally:
+        stop.set()
+        thread.join(timeout=1)
+        print("\r" + " " * 8 + "\r", end="", flush=True)
 
 
 def get_pip_packages() -> list:
