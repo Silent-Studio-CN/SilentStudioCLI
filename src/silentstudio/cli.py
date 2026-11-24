@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import subprocess
 import sys
 from typing import Optional
 
@@ -26,6 +27,9 @@ SilentStudio CLI v{__version__} - 让开发者体验更好一点
   silentstudio new <name> --lang <lang>创建新项目
   silentstudio <pkg_name>              查询并安装生态库
   silentstudio install list            列出已安装的库
+  silentstudio release <project> <ver> 触发 GitHub Release
+  silentstudio git <args...>           git 透传
+  silentstudio status / commit / push  常用 git 快捷命令
 
 示例:
   silentstudio new my-app -l java
@@ -48,6 +52,9 @@ Usage:
   silentstudio new <name> --lang <lang> Create new project
   silentstudio <pkg_name>              Query and install package
   silentstudio install list            List installed packages
+  silentstudio release <project> <ver> Trigger a GitHub release
+  silentstudio git <args...>           Pass through to git
+  silentstudio status / commit / push  Common git shortcuts
 
 Examples:
   silentstudio new my-app -l java
@@ -59,9 +66,24 @@ More info: https://github.com/Silent-Studio-CN/SilentStudioCLI
 """)
 
 
+GIT_COMMANDS = {
+    "status", "log", "diff", "add", "commit", "push", "pull", "fetch",
+    "branch", "checkout", "switch", "restore", "remote", "tag", "stash",
+}
+
+
 def main():
     """主入口"""
     lang = get_system_language()
+
+    argv = sys.argv[1:]
+    if argv and argv[0] in ("release", "releases"):
+        from .release import handle_release
+        return handle_release(argv[1:])
+    if argv and argv[0] == "git":
+        return subprocess.call(["git", *argv[1:]])
+    if argv and argv[0] in GIT_COMMANDS:
+        return subprocess.call(["git", *argv])
     
     # 检查是否有参数
     if len(sys.argv) == 1:

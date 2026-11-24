@@ -48,6 +48,25 @@ silentstudio -w
 
 ---
 
+## 🚀 发布与 Git
+
+    # 每个仓库一份配置
+    ss release config
+
+    # 触发 GitHub Actions 发布并等待完成
+    ss release silentcraft 3.18
+
+    # 指定 commit 和目标版本
+    ss release silentcraft 3.18 <commit> --dry-run
+
+    # git 透传 / 快捷命令
+    ss git status
+    ss status
+    ss commit -m "message"
+    ss push
+
+配置写入仓库根目录 .ss.json，不会保存任何令牌；发布使用本机 gh auth 登录态。
+
 ## 📖 命令详解
 
 ### 1. 显示帮助
