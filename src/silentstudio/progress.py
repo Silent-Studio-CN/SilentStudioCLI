@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import shutil
 import sys
+import unicodedata
 
 LABELS = {
     "zh-CN": ("收集", "下载", "安装", "总进度"),
@@ -14,6 +15,22 @@ LABELS = {
     "it": ("Raccolta", "Download", "Installazione", "Totale"),
     "en": ("Collect", "Download", "Install", "Total"),
 }
+
+
+def _display_width(text: str) -> int:
+    return sum(2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1 for ch in text)
+
+
+def _fit(text: str, width: int) -> str:
+    out = []
+    used = 0
+    for ch in text:
+        cell = 2 if unicodedata.east_asian_width(ch) in ("W", "F") else 1
+        if used + cell > width:
+            break
+        out.append(ch)
+        used += cell
+    return "".join(out) + " " * (width - used)
 
 
 def _bar(percent: int, width: int = 16) -> str:
@@ -32,7 +49,7 @@ class InstallProgress:
         self.total = 0
         self._started = False
         self._interactive = sys.stdout.isatty()
-        self.width = max(40, shutil.get_terminal_size((80, 24)).columns - 1)
+        self.width = max(40, shutil.get_terminal_size((80, 24)).columns - 2)
 
     def _lines(self) -> list[str]:
         return [
@@ -47,12 +64,12 @@ class InstallProgress:
         if not self._interactive:
             if initial:
                 for line in lines:
-                    print(line[: self.width])
+                    print(_fit(line, self.width))
             return
         if not initial:
             sys.stdout.write("\x1b[4A")
         for line in lines:
-            sys.stdout.write("\r" + line[: self.width].ljust(self.width) + "\n")
+            sys.stdout.write("\r" + _fit(line, self.width) + "\n")
         sys.stdout.flush()
 
     def start(self) -> None:

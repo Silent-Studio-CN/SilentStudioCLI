@@ -96,16 +96,21 @@ def _run_pip_install(pkg_name: str, url: str, scope: str, lang: str):
 
     env = os.environ.copy()
     env.update({"TMPDIR": temp_dir, "TEMP": temp_dir, "TMP": temp_dir,
-                "PYTHONUNBUFFERED": "1", "TERM": "xterm-256color"})
+                "PYTHONUNBUFFERED": "1", "TERM": "xterm-256color",
+                "COLUMNS": "80", "LINES": "24"})
 
-    # Keep pip on a pipe: a pty makes rich/terminal-size negotiation hang on
-    # some terminals. The progress bars still update from pip stage events.
-    use_pty = False
+    # A pty lets pip render its byte-level download progress. Set the window
+    # size so rich does not block waiting for a terminal-size response.
+    use_pty = os.name != "nt"
     master = None
     slave = None
     if use_pty:
+        import fcntl
         import pty
+        import struct
+        import termios
         master, slave = pty.openpty()
+        fcntl.ioctl(slave, termios.TIOCSWINSZ, struct.pack("HHHH", 24, 80, 0, 0))
         kwargs = {"stdout": slave, "stderr": slave, "stdin": subprocess.DEVNULL}
     else:
         kwargs = {"stdout": subprocess.PIPE, "stderr": subprocess.STDOUT}
@@ -129,7 +134,10 @@ def _run_pip_install(pkg_name: str, url: str, scope: str, lang: str):
     buffer = []
     try:
         while True:
-            chunk = reader.read(1) if reader else b""
+            try:
+                chunk = reader.read(1) if reader else b""
+            except OSError:
+                break
             if not chunk:
                 break
             char = chunk.decode("utf-8", "replace")
@@ -139,13 +147,19 @@ def _run_pip_install(pkg_name: str, url: str, scope: str, lang: str):
                 if not line:
                     continue
                 output.append(line)
-                if "Collecting" in line:
+                clean = re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", line)
+                if "Collecting" in clean:
                     progress.update("collect", 100)
-                if "Downloading" in line or "Using cached" in line:
+                if "Downloading" in clean or "Using cached" in clean:
                     progress.update("download", 0)
-                match = re.search(r"(\d{1,3})%", line)
+                match = re.search(r"(\d{1,3})%", clean)
                 if match:
                     progress.update("download", int(match.group(1)))
+                size = re.search(r"(\d+(?:\.\d+)?)\s*/\s*(\d+(?:\.\d+)?)\s*(?:MB|kB|GB)", clean)
+                if size:
+                    current, total = float(size.group(1)), float(size.group(2))
+                    if total > 0:
+                        progress.update("download", int(current * 100 / total))
                 if "Installing collected packages" in line:
                     progress.update("download", 100)
                     progress.update("install", 10)
